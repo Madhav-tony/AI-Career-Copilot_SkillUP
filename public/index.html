@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Career Copilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --bg:#101B2D;
+    --panel:#16233A;
+    --panel-hi:#1C2C47;
+    --line:#2A3A56;
+    --text:#EDEFE9;
+    --text-dim:#9FADC4;
+    --gold:#D9A54B;
+    --gold-dim:#8A6F3C;
+    --green:#6FA287;
+    --red:#C0654F;
+    --radius:4px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  h1,h2,h3,.serif{font-family:'Fraunces',serif;font-weight:500;}
+  ::selection{background:var(--gold);color:#101B2D;}
+
+  .app{ display:flex; min-height:100vh; }
+
+  /* ---- Journey rail (left nav) ---- */
+  .rail{
+    width:220px;
+    flex-shrink:0;
+    background:var(--panel);
+    border-right:1px solid var(--line);
+    padding:32px 0;
+    display:flex;
+    flex-direction:column;
+  }
+  .brand{
+    padding:0 24px 28px 24px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:8px;
+  }
+  .brand .mark{ color:var(--gold); font-size:13px; letter-spacing:.02em; }
+  .brand h1{ font-size:21px; margin:6px 0 0 0; line-height:1.2; }
+
+  .waypoints{ list-style:none; margin:16px 0 0 0; padding:0; position:relative; }
+  .waypoints::before{
+    content:'';
+    position:absolute;
+    left:35px; top:8px; bottom:8px;
+    width:1px;
+    background:var(--line);
+  }
+  .waypoint{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:13px 24px;
+    cursor:pointer;
+    position:relative;
+    color:var(--text-dim);
+    font-size:14px;
+    transition:color .15s ease;
+  }
+  .waypoint:hover{ color:var(--text); }
+  .waypoint.active{ color:var(--text); }
+  .waypoint .dot{
+    width:11px; height:11px; border-radius:50%;
+    background:var(--panel-hi);
+    border:1px solid var(--line);
+    flex-shrink:0;
+    position:relative; z-index:1;
+    transition:all .15s ease;
+  }
+  .waypoint.active .dot{ background:var(--gold); border-color:var(--gold); }
+  .waypoint.done .dot{ background:var(--green); border-color:var(--green); }
+  .waypoint .num{ font-size:11px; color:var(--text-dim); width:16px; }
+  .waypoint.locked{ opacity:.4; cursor:not-allowed; }
+
+  .rail-foot{ margin-top:auto; padding:20px 24px 0 24px; border-top:1px solid var(--line); font-size:12px; color:var(--text-dim); line-height:1.5; }
+
+  /* ---- Main content ---- */
+  main{ flex:1; padding:44px 56px; max-width:920px; }
+  .eyebrow{ color:var(--gold); font-size:13px; margin:0 0 6px 0; }
+  .page-title{ font-size:30px; margin:0 0 8px 0; }
+  .page-sub{ color:var(--text-dim); font-size:15px; max-width:64ch; line-height:1.55; margin:0 0 32px 0; }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-left:3px solid var(--gold-dim);
+    border-radius:var(--radius);
+    padding:24px 28px;
+    margin-bottom:20px;
+  }
+  .panel h3{ font-size:16px; margin:0 0 14px 0; }
+
+.dropzone{
+  display:block;
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:48px 28px;
+  text-align:center;
+  cursor:pointer;
+  transition:border-color .15s ease, background .15s ease;
+  box-sizing:border-box;
+}
+  .dropzone:hover{ border-color:var(--gold-dim); background:var(--panel-hi); }
+  .dropzone .icon{ font-size:28px; margin-bottom:10px; opacity:.8;}
+  .dropzone .lead{ font-size:15px; margin-bottom:4px; }
+  .dropzone .hint{ font-size:13px; color:var(--text-dim); }
+
+  input[type=file]{ display:none; }
+
+  textarea, input[type=text]{
+    width:100%;
+    background:var(--panel-hi);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    color:var(--text);
+    padding:11px 13px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    resize:vertical;
+  }
+  textarea:focus, input:focus{ outline:none; border-color:var(--gold-dim); }
+  label.field-label{ display:block; font-size:13px; color:var(--text-dim); margin:0 0 8px 0; }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:var(--gold);
+    color:#1A1408;
+    border:none;
+    border-radius:var(--radius);
+    padding:11px 20px;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  .btn:hover{ background:#e8b562; }
+  .btn:disabled{ background:var(--line); color:var(--text-dim); cursor:not-allowed; }
+  .btn.ghost{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text);
+  }
+  .btn.ghost:hover{ border-color:var(--gold-dim); background:var(--panel-hi); }
+
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .chip{
+    background:var(--panel-hi);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:5px 13px;
+    font-size:13px;
+    color:var(--text-dim);
+  }
+  .chip.hit{ color:var(--text); border-color:var(--green); }
+
+  /* Career match list */
+  .career-row{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:16px 0;
+    border-bottom:1px solid var(--line);
+    cursor:pointer;
+  }
+  .career-row:last-child{ border-bottom:none; }
+  .career-row:hover .career-name{ color:var(--gold); }
+  .career-rank{ font-family:'Fraunces',serif; font-size:20px; color:var(--text-dim); width:28px; }
+  .career-main{ flex:1; }
+  .career-name{ font-size:16px; margin-bottom:2px; transition:color .15s ease;}
+  .career-desc{ font-size:13px; color:var(--text-dim); }
+  .career-score{ font-family:'Fraunces',serif; font-size:22px; color:var(--gold); width:64px; text-align:right; }
+
+  /* Skill gap bars */
+  .skill-gap-row{ margin-bottom:18px; }
+  .sg-top{ display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; }
+  .sg-name{ color:var(--text); }
+  .sg-status{ font-size:12px; }
+  .sg-status.ok{ color:var(--green); }
+  .sg-status.mid{ color:var(--gold); }
+  .sg-status.gap{ color:var(--red); }
+  .sg-track{ height:8px; background:var(--panel-hi); border-radius:4px; overflow:hidden; position:relative; }
+  .sg-fill{ height:100%; background:var(--gold-dim); border-radius:4px; }
+  .sg-marker{ position:absolute; top:-3px; width:2px; height:14px; background:var(--text); }
+  .sg-note{ font-size:13px; color:var(--text-dim); margin-top:8px; line-height:1.5; }
+
+  /* Readiness score */
+  .readiness-hero{ display:flex; align-items:center; gap:40px; margin-bottom:8px; }
+  .score-ring{ position:relative; width:150px; height:150px; flex-shrink:0; }
+  .score-ring svg{ transform:rotate(-90deg); }
+  .score-num{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',serif; font-size:38px;
+  }
+  .score-breakdown{ flex:1; }
+  .sb-row{ display:flex; align-items:center; gap:12px; margin-bottom:10px; font-size:13px; }
+  .sb-label{ width:120px; color:var(--text-dim); }
+  .sb-track{ flex:1; height:6px; background:var(--panel-hi); border-radius:3px; overflow:hidden; }
+  .sb-fill{ height:100%; background:var(--green); }
+  .sb-val{ width:38px; text-align:right; }
+
+  /* Roadmap */
+  .roadmap-month{ display:flex; gap:20px; margin-bottom:22px; }
+  .roadmap-label{ width:80px; flex-shrink:0; font-size:13px; color:var(--gold); padding-top:2px; }
+  .roadmap-items{ flex:1; }
+  .roadmap-item{
+    background:var(--panel-hi);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:12px 16px;
+    margin-bottom:8px;
+    font-size:14px;
+  }
+  .roadmap-focus{ font-weight:600; margin-bottom:6px; }
+  .roadmap-skills{ font-size:13px; color:var(--gold); margin-bottom:6px; }
+  .roadmap-resources, .roadmap-milestone{ font-size:13px; color:var(--text-dim); line-height:1.5; margin-top:4px; }
+
+  /* Interview */
+  .interview-q{ font-size:17px; margin-bottom:16px; line-height:1.5; }
+  .interview-feedback{ margin-top:20px; }
+  .fb-row{ display:flex; justify-content:space-between; font-size:14px; padding:8px 0; border-bottom:1px solid var(--line); }
+  .fb-row:last-child{ border:none; }
+  .fb-note{ font-size:14px; color:var(--text-dim); line-height:1.55; margin-top:14px; }
+
+  .empty-note{ color:var(--text-dim); font-size:14px; padding:20px 0; }
+  .note-box{
+    background:var(--panel-hi);
+    border-left:2px solid var(--gold-dim);
+    padding:12px 16px;
+    font-size:13px;
+    color:var(--text-dim);
+    line-height:1.5;
+    margin-top:16px;
+  }
+  select{
+    background:var(--panel-hi);
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:9px 12px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <nav class="rail">
+    <div class="brand">
+      <div class="mark">Career Copilot</div>
+      <h1>Your path to<br>job-ready</h1>
+    </div>
+    <ul class="waypoints" id="waypoints">
+      <li class="waypoint active" data-page="profile"><span class="num">1</span><span class="dot"></span> Profile</li>
+      <li class="waypoint locked" data-page="matches"><span class="num">2</span><span class="dot"></span> Career Matches</li>
+      <li class="waypoint locked" data-page="gap"><span class="num">3</span><span class="dot"></span> Skill Gap</li>
+      <li class="waypoint locked" data-page="roadmap"><span class="num">4</span><span class="dot"></span> Roadmap</li>
+      <li class="waypoint locked" data-page="readiness"><span class="num">5</span><span class="dot"></span> Readiness</li>
+      <li class="waypoint locked" data-page="interview"><span class="num">6</span><span class="dot"></span> Mock Interview</li>
+    </ul>
+  </nav>
+
+  <main id="main"></main>
+</div>
+
+<script>
+/* =========================================================
+   DATA: careers taxonomy (stand-in for a real backend table)
+   ========================================================= */
+const CAREERS = [
+  { id:'data-analyst', name:'Data Analyst', desc:'Turns raw data into decisions',
+    skills:{ 'python':2,'sql':3,'excel':3,'statistics':2,'data visualization':3,'communication':2 } },
+  { id:'ml-engineer', name:'ML Engineer', desc:'Builds and ships ML systems',
+    skills:{ 'python':3,'machine learning':3,'deep learning':2,'sql':2,'statistics':2,'git':2,'tensorflow':2,'pytorch':2 } },
+  { id:'data-scientist', name:'Data Scientist', desc:'Models and experiments with data',
+    skills:{ 'python':3,'statistics':3,'machine learning':2,'sql':2,'data visualization':2,'communication':2 } },
+  { id:'backend-developer', name:'Backend Developer', desc:'Builds server-side systems and APIs',
+    skills:{ 'java':2,'sql':2,'git':2,'node.js':2,'system design':2,'apis':3 } },
+  { id:'frontend-developer', name:'Frontend Developer', desc:'Builds user-facing interfaces',
+    skills:{ 'javascript':3,'react':3,'css':2,'html':2,'git':2,'ui/ux':2 } },
+  { id:'cloud-engineer', name:'Cloud Engineer', desc:'Runs and scales cloud infrastructure',
+    skills:{ 'linux':2,'aws':3,'docker':2,'kubernetes':2,'networking':2,'git':2 } },
+  { id:'cybersecurity-analyst', name:'Cybersecurity Analyst', desc:'Protects systems and data',
+    skills:{ 'networking':3,'linux':2,'security fundamentals':3,'python':1,'risk analysis':2 } },
+  { id:'product-manager', name:'Product Manager', desc:'Defines what gets built and why',
+    skills:{ 'communication':3,'sql':1,'data visualization':1,'stakeholder management':3,'prioritization':2 } },
+];
+
+// master skill list the extractor looks for (keyword-based, works offline)
+const SKILL_KEYWORDS = [
+  'python','java','javascript','sql','c++','c#','html','css','react','node.js','node',
+  'machine learning','deep learning','tensorflow','pytorch','statistics','data visualization',
+  'excel','git','docker','kubernetes','aws','azure','gcp','linux','networking',
+  'security fundamentals','risk analysis','communication','stakeholder management',
+  'prioritization','system design','apis','ui/ux','r','scikit-learn','pandas','numpy'
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+let STATE = {
+  resumeText: '',
+  extractedSkills: {},   // { skillname: level 1-3 }
+  projectsCount: 0,
+  certsCount: 0,
+  targetCareer: null,
+  currentGap: [],
+  roadmap: [],
+  roadmapSource: null,   // 'ai' | 'local-fallback' | 'n/a'
+  interviewScores: [],
+};
+
+const PAGES_ORDER = ['profile','matches','gap','roadmap','readiness','interview'];
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+function unlockUpTo(pageId){
+  const idx = PAGES_ORDER.indexOf(pageId);
+  document.querySelectorAll('.waypoint').forEach(w=>{
+    const wIdx = PAGES_ORDER.indexOf(w.dataset.page);
+    if(wIdx <= idx) w.classList.remove('locked');
+  });
+}
+function markDone(pageId){
+  document.querySelector(`.waypoint[data-page="${pageId}"]`).classList.add('done');
+}
+function goTo(pageId){
+  document.querySelectorAll('.waypoint').forEach(w=>w.classList.remove('active'));
+  const target = document.querySelector(`.waypoint[data-page="${pageId}"]`);
+  if(target.classList.contains('locked')) return;
+  target.classList.add('active');
+  RENDER[pageId]();
+}
+document.getElementById('waypoints').addEventListener('click', (e)=>{
+  const li = e.target.closest('.waypoint');
+  if(li) goTo(li.dataset.page);
+});
+
+/* =========================================================
+   RESUME PARSING (client-side, via pdf.js)
+   ========================================================= */
+async function extractPdfText(file){
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let text = '';
+  for(let i=1;i<=pdf.numPages;i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(it=>it.str).join(' ') + '\n';
+  }
+  return text;
+}
+
+function analyzeResumeText(text){
+  const lower = text.toLowerCase();
+  const skills = {};
+  SKILL_KEYWORDS.forEach(kw=>{
+    if(lower.includes(kw)){
+      // crude level heuristic: mentioned once = level 1, "advanced"/"expert" near it = level 3, else 2
+      let level = 2;
+      const idx = lower.indexOf(kw);
+      const window = lower.substring(Math.max(0,idx-30), idx+30);
+      if(/advanced|expert|extensive/.test(window)) level = 3;
+      else if(/basic|familiar|beginner|exposure/.test(window)) level = 1;
+      skills[kw] = level;
+    }
+  });
+  const projectsCount = (lower.match(/project/g) || []).length;
+  const certsCount = (lower.match(/certificat|certified/g) || []).length;
+  return { skills, projectsCount, certsCount };
+}
+
+/* =========================================================
+   MATCHING / GAP / SCORE LOGIC
+   ========================================================= */
+function computeCareerMatches(userSkills){
+  return CAREERS.map(c=>{
+    const req = Object.keys(c.skills);
+    let earned = 0, total = 0;
+    req.forEach(s=>{
+      const reqLevel = c.skills[s];
+      total += reqLevel;
+      const have = userSkills[s] || 0;
+      earned += Math.min(have, reqLevel);
+    });
+    const pct = total>0 ? Math.round((earned/total)*100) : 0;
+    return { ...c, pct };
+  }).sort((a,b)=>b.pct - a.pct);
+}
+
+function computeGap(career, userSkills){
+  return Object.keys(career.skills).map(name=>{
+    const required = career.skills[name];
+    const current = userSkills[name] || 0;
+    let status = 'gap';
+    if(current >= required) status = 'ok';
+    else if(current >= required - 1) status = 'mid';
+    return { name, required, current, status };
+  });
+}
+
+function buildRoadmap(gapList){
+  const missing = gapList.filter(g=>g.status !== 'ok').map(g=>g.name);
+  const months = [];
+  for(let i=0;i<missing.length;i+=2){
+    const slice = missing.slice(i,i+2);
+    months.push({ month: months.length+1, focus: slice.join(' & '), skills: slice, resources: [], milestone: '' });
+  }
+  return months;
+}
+
+/* Calls the AI-backed roadmap endpoint, falling back to the local
+   grouping above if the server/AI is unavailable. Sets STATE.roadmap
+   and STATE.roadmapSource either way. */
+async function buildRoadmapForTarget(gap){
+  try{
+    const res = await fetch('/api/roadmap', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ career: STATE.targetCareer, gap })
+    });
+    if(!res.ok) throw new Error('server error');
+    const result = await res.json();
+    STATE.roadmap = result.roadmap;
+    STATE.roadmapSource = result.source;
+  }catch(err){
+    STATE.roadmap = buildRoadmap(gap);
+    STATE.roadmapSource = 'local-fallback';
+  }
+}
+
+function computeReadiness(){
+  const skillsPct = STATE.targetCareer
+    ? computeCareerMatches(STATE.extractedSkills).find(c=>c.id===STATE.targetCareer.id).pct
+    : 0;
+  const projectsScore = Math.min(100, STATE.projectsCount * 20);
+  const resumeScore = Math.min(100, Math.round((STATE.resumeText.length / 2000) * 100));
+  const certsScore = Math.min(100, STATE.certsCount * 34);
+  const interviewScore = STATE.interviewScores.length
+    ? Math.round(STATE.interviewScores.reduce((a,b)=>a+b,0)/STATE.interviewScores.length)
+    : 0;
+
+  const overall = Math.round(
+    skillsPct*0.4 + projectsScore*0.2 + resumeScore*0.15 + certsScore*0.1 + interviewScore*0.15
+  );
+  return { overall, skillsPct, projectsScore, resumeScore, certsScore, interviewScore };
+}
+
+/* mock interview: keyword-based scoring stand-in for a real LLM call */
+const INTERVIEW_BANK = {
+  'ml-engineer': [
+    { q:"Explain the difference between supervised and unsupervised learning.",
+      keywords:['label','unlabeled','supervised','unsupervised','training'] },
+    { q:"What is overfitting, and how would you address it?",
+      keywords:['overfit','generalize','regularization','validation','training data'] },
+  ],
+  'data-analyst': [
+    { q:"How would you handle missing data in a dataset?",
+      keywords:['missing','impute','drop','mean','median','null'] },
+    { q:"Walk me through how you'd approach a new dataset.",
+      keywords:['explore','clean','visualize','distribution','outlier'] },
+  ],
+  'default': [
+    { q:"Tell me about a project you're proud of and why.",
+      keywords:['project','challenge','result','learned','impact'] },
+    { q:"How do you approach learning a new technical skill?",
+      keywords:['practice','documentation','project','course','build'] },
+  ]
+};
+
+function scoreAnswer(answer, keywords){
+  const lower = answer.toLowerCase();
+  const hits = keywords.filter(k=>lower.includes(k)).length;
+  const completeness = Math.min(10, Math.round((answer.split(/\s+/).length / 15)));
+  const technical = Math.min(10, Math.round((hits/keywords.length)*10));
+  const clarity = answer.length > 20 ? Math.min(10, Math.round(answer.split(/[.!?]/).length * 2)) : 3;
+  const overall = Math.round((technical+clarity+completeness)/3 * 10) / 10;
+  return { technical, clarity, completeness, overall };
+}
+
+/* =========================================================
+   RENDER FUNCTIONS
+   ========================================================= */
+const RENDER = {};
+
+RENDER.profile = function(){
+  document.getElementById('main').innerHTML = `
+    <div class="eyebrow">Step 1</div>
+    <h2 class="page-title">Build your profile</h2>
+    <p class="page-sub">Upload a resume (PDF) or paste your details below. This runs entirely
+    in your browser — nothing is uploaded anywhere.</p>
+
+    <div class="panel">
+      <h3>Upload resume</h3>
+      <label class="dropzone" id="dropzone">
+        <div class="icon">📄</div>
+        <div class="lead" id="dz-label">Click to upload a PDF resume</div>
+        <div class="hint">or paste resume text below instead</div>
+      </label>
+      <input type="file" id="resumeInput" accept="application/pdf">
+    </div>
+
+    <div class="panel">
+      <h3>Or paste resume text</h3>
+      <textarea id="pastedText" rows="6" placeholder="Paste your resume text here..."></textarea>
+    </div>
+
+    <button class="btn" id="analyzeBtn">Analyze my profile</button>
+    <div id="analysisResult"></div>
+  `;
+
+  document.getElementById('dropzone').addEventListener('click', ()=>{
+    document.getElementById('resumeInput').click();
+  });
+  document.getElementById('resumeInput').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    document.getElementById('dz-label').textContent = `Extracting text from ${file.name}...`;
+    try{
+      const text = await extractPdfText(file);
+      STATE.resumeText = text;
+      document.getElementById('dz-label').textContent = `✓ Loaded: ${file.name}`;
+      document.getElementById('pastedText').value = text.substring(0, 3000);
+    }catch(err){
+      document.getElementById('dz-label').textContent = `Could not read PDF — paste text below instead.`;
+    }
+  });
+
+  document.getElementById('analyzeBtn').addEventListener('click', async ()=>{
+    const text = document.getElementById('pastedText').value.trim() || STATE.resumeText;
+    if(!text){
+      document.getElementById('analysisResult').innerHTML =
+        `<div class="empty-note">Upload a resume or paste some text first.</div>`;
+      return;
+    }
+    STATE.resumeText = text;
+    document.getElementById('analyzeBtn').disabled = true;
+    document.getElementById('analyzeBtn').textContent = 'Analyzing...';
+
+    let result;
+    try{
+      const res = await fetch('/api/extract-skills', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ resumeText: text })
+      });
+      if(!res.ok) throw new Error('server error');
+      result = await res.json();
+    }catch(err){
+      // server unreachable — fall back to the same logic running fully client-side
+      result = analyzeResumeText(text);
+      result.source = 'local-fallback';
+    }
+
+    STATE.extractedSkills = result.skills;
+    STATE.projectsCount = result.projectsCount;
+    STATE.certsCount = result.certsCount;
+
+    const chips = SKILL_KEYWORDS.map(kw=>{
+      const hit = result.skills[kw];
+      return `<span class="chip ${hit?'hit':''}">${kw}${hit?' · L'+hit:''}</span>`;
+    }).join('');
+
+    const sourceTag = result.source === 'ai'
+      ? `<span style="color:var(--green)">●-Analyzed</span>`
+      : `<span style="color:var(--text-dim)">● Local fallback (no AI configured, or call failed)</span>`;
+
+    document.getElementById('analyzeBtn').disabled = false;
+    document.getElementById('analyzeBtn').textContent = 'Analyze my profile';
+
+    document.getElementById('analysisResult').innerHTML = `
+      <div class="panel" style="margin-top:20px;">
+        <h3>Extracted profile <span style="font-size:12px;font-weight:400;">${sourceTag}</span></h3>
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">
+          ${Object.keys(result.skills).length} skills detected · ${result.projectsCount} project mentions · ${result.certsCount} certification mentions
+        </div>
+        <div class="chip-row">${chips}</div>
+      </div>
+    `;
+    unlockUpTo('matches');
+    markDone('profile');
+  });
+};
+
+function renderMatchRows(matches, sourceTag){
+  const rows = matches.map((c,i)=>`
+    <div class="career-row" data-career="${c.id}">
+      <div class="career-rank">${String(i+1).padStart(2,'0')}</div>
+      <div class="career-main">
+        <div class="career-name">${c.name}</div>
+        <div class="career-desc">${c.reason || c.desc}</div>
+      </div>
+      <div class="career-score">${c.pct}%</div>
+    </div>
+  `).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div class="eyebrow">Step 2</div>
+    <h2 class="page-title">Career matches <span style="font-size:12px;font-weight:400;">${sourceTag}</span></h2>
+    <p class="page-sub">Based on your extracted skills, matched against required skill
+    profiles for each role. Percentages reflect fit against this app's model, not a
+    guarantee of hiring outcomes.</p>
+    <div class="panel">${rows}</div>
+    <div class="note-box">Click a career to set it as your target and continue to skill gap analysis.</div>
+  `;
+
+  document.querySelectorAll('.career-row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const career = CAREERS.find(c=>c.id===row.dataset.career);
+      STATE.targetCareer = career;
+      unlockUpTo('gap');
+      markDone('matches');
+      goTo('gap');
+    });
+  });
+}
+
+RENDER.matches = async function(){
+  document.getElementById('main').innerHTML = `
+    <div class="eyebrow">Step 2</div>
+    <h2 class="page-title">Career matches</h2>
+    <p class="page-sub">Scoring your fit against each role...</p>
+  `;
+
+  let matches, sourceTag;
+  try{
+    const res = await fetch('/api/career-matches', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        skills: STATE.extractedSkills,
+        projectsCount: STATE.projectsCount,
+        certsCount: STATE.certsCount,
+        careers: CAREERS,
+      })
+    });
+    if(!res.ok) throw new Error('server error');
+    const result = await res.json();
+    matches = result.matches
+      .map(m => ({ ...CAREERS.find(c=>c.id===m.id), ...m }))
+      .sort((a,b)=>b.pct - a.pct);
+    sourceTag = result.source === 'ai'
+      ? `<span style="color:var(--green)">● AI-analyzed</span>`
+      : `<span style="color:var(--text-dim)">● Local fallback (no AI configured, or call failed)</span>`;
+  }catch(err){
+    matches = computeCareerMatches(STATE.extractedSkills);
+    sourceTag = `<span style="color:var(--text-dim)">● Local fallback (server unreachable)</span>`;
+  }
+
+  renderMatchRows(matches, sourceTag);
+};
+
+function renderGapRows(gap, sourceTag){
+  const rows = gap.map(g=>{
+    const pct = Math.min(100, Math.round((g.current/3)*100));
+    const markerPct = Math.min(100, Math.round((g.required/3)*100));
+    const statusLabel = g.status==='ok' ? 'On track' : g.status==='mid' ? 'Close' : 'Gap';
+    return `
+      <div class="skill-gap-row">
+        <div class="sg-top">
+          <span class="sg-name">${g.name}</span>
+          <span class="sg-status ${g.status}">${statusLabel}</span>
+        </div>
+        <div class="sg-track">
+          <div class="sg-fill" style="width:${pct}%"></div>
+          <div class="sg-marker" style="left:${markerPct}%"></div>
+        </div>
+        ${g.note ? `<div class="sg-note">${g.note}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  const gapCount = gap.filter(g=>g.status!=='ok').length;
+
+  document.getElementById('main').innerHTML = `
+    <div class="eyebrow">Step 3 · Target: ${STATE.targetCareer.name}</div>
+    <h2 class="page-title">Skill gap analysis <span style="font-size:12px;font-weight:400;">${sourceTag}</span></h2>
+    <p class="page-sub">The vertical mark shows the required level for ${STATE.targetCareer.name};
+    the bar shows where you currently stand.</p>
+    <div class="panel">${rows}</div>
+    <div class="note-box">${gapCount} skill${gapCount===1?'':'s'} below target level.</div>
+    <button class="btn" id="toRoadmap">Generate learning roadmap</button>
+  `;
+
+  document.getElementById('toRoadmap').addEventListener('click', async ()=>{
+    document.getElementById('toRoadmap').disabled = true;
+    document.getElementById('toRoadmap').textContent = 'Building roadmap...';
+    await buildRoadmapForTarget(gap);
+    unlockUpTo('roadmap');
+    markDone('gap');
+    goTo('roadmap');
+  });
+}
+
+RENDER.gap = async function(){
+  if(!STATE.targetCareer){
+    document.getElementById('main').innerHTML = `<div class="empty-note">Pick a target career on the Career Matches page first.</div>`;
+    return;
+  }
+  document.getElementById('main').innerHTML = `
+    <div class="eyebrow">Step 3 · Target: ${STATE.targetCareer.name}</div>
+    <h2 class="page-title">Skill gap analysis</h2>
+    <p class="page-sub">Comparing your profile against ${STATE.targetCareer.name}...</p>
+  `;
+
+  let gap, sourceTag;
+  try{
+    const res = await fetch('/api/skill-gap', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ career: STATE.targetCareer, skills: STATE.extractedSkills })
+    });
+    if(!res.ok) throw new Error('server error');
+    const result = await res.json();
+    gap = result.gap;
+    sourceTag = result.source === 'ai'
+      ? `<span style="color:var(--green)">● AI-analyzed</span>`
+      : `<span style="color:var(--text-dim)">● Local fallback (no AI configured, or call failed)</span>`;
+  }catch(err){
+    gap = computeGap(STATE.targetCareer, STATE.extractedSkills);
+    sourceTag = `<span style="color:var(--text-dim)">● Local fallback (server unreachable)</span>`;
+  }
+
+  STATE.currentGap = gap;
+  renderGapRows(gap, sourceTag);
+};
+
+RENDER.roadmap = function(){
+  const sourceTag = STATE.roadmapSource === 'ai'
+    ? `<span style="color:var(--green)">● AI-generated</span>`
+    : STATE.roadmapSource === 'n/a' ? ''
+    : `<span style="color:var(--text-dim)">● Local fallback (no AI configured, or call failed)</span>`;
+
+  if(!STATE.roadmap.length){
+    document.getElementById('main').innerHTML = `
+      <div class="eyebrow">Step 4</div>
+      <h2 class="page-title">Learning roadmap</h2>
+      <div class="panel"><div class="empty-note">No gaps to close — you're already meeting the bar on every required skill for ${STATE.targetCareer ? STATE.targetCareer.name : 'this role'}. Nice work.</div></div>
+      <button class="btn" id="toReadiness">See readiness score</button>
+    `;
+  } else {
+    const months = STATE.roadmap.map((m)=>`
+      <div class="roadmap-month">
+        <div class="roadmap-label">Month ${m.month}</div>
+        <div class="roadmap-items">
+          <div class="roadmap-item">
+            <div class="roadmap-focus">${m.focus || m.skills.join(' & ')}</div>
+            ${m.skills.length ? `<div class="roadmap-skills">${m.skills.join(' · ')}</div>` : ''}
+            ${m.resources && m.resources.length ? `<div class="roadmap-resources">Resources: ${m.resources.join(', ')}</div>` : ''}
+            ${m.milestone ? `<div class="roadmap-milestone">Milestone: ${m.milestone}</div>` : ''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    document.getElementById('main').innerHTML = `
+      <div class="eyebrow">Step 4 · Target: ${STATE.targetCareer.name}</div>
+      <h2 class="page-title">Learning roadmap <span style="font-size:12px;font-weight:400;">${sourceTag}</span></h2>
+      <p class="page-sub">Missing skills sequenced into a month-by-month plan
+      so it stays realistic alongside coursework or a job search.</p>
+      <div class="panel">${months}</div>
+      <button class="btn" id="toReadiness">See readiness score</button>
+    `;
+  }
+
+  document.getElementById('toReadiness').addEventListener('click', ()=>{
+    unlockUpTo('readiness');
+    markDone('roadmap');
+    goTo('readiness');
+  });
+};
+
+RENDER.readiness = function(){
+  const r = computeReadiness();
+  const circumference = 2 * Math.PI * 62;
+  const offset = circumference - (r.overall/100)*circumference;
+
+  document.getElementById('main').innerHTML = `
+    <div class="eyebrow">Step 5</div>
+    <h2 class="page-title">Job readiness score</h2>
+    <p class="page-sub">A weighted estimate across skills, project evidence, resume quality,
+    certifications, and interview practice. Use it to see where to focus next, not as a verdict.</p>
+
+    <div class="panel">
+      <div class="readiness-hero">
+        <div class="score-ring">
+          <svg width="150" height="150">
+            <circle cx="75" cy="75" r="62" fill="none" stroke="#1C2C47" stroke-width="10"/>
+            <circle cx="75" cy="75" r="62" fill="none" stroke="#D9A54B" stroke-width="10"
+              stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+          </svg>
+          <div class="score-num">${r.overall}%</div>
+        </div>
+        <div class="score-breakdown">
+          ${sbRow('Skills match', r.skillsPct, 40)}
+          ${sbRow('Projects', r.projectsScore, 20)}
+          ${sbRow('Resume quality', r.resumeScore, 15)}
+          ${sbRow('Certifications', r.certsScore, 10)}
+          ${sbRow('Interview practice', r.interviewScore, 15)}
+        </div>
+      </div>
+    </div>
+    <div class="note-box">Formula: Skills×40% + Projects×20% + Resume×15% + Certifications×10% + Interview×15%</div>
+    <button class="btn" id="toInterview" style="margin-top:16px;">Practice a mock interview</button>
+  `;
+
+  document.getElementById('toInterview').addEventListener('click', ()=>{
+    unlockUpTo('interview');
+    markDone('readiness');
+    goTo('interview');
+  });
+
+  function sbRow(label, val, weight){
+    return `
+      <div class="sb-row">
+        <div class="sb-label">${label} <span style="opacity:.5">(${weight}%)</span></div>
+        <div class="sb-track"><div class="sb-fill" style="width:${val}%"></div></div>
+        <div class="sb-val">${val}%</div>
+      </div>
+    `;
+  }
+};
+
+let currentQ = null;
+RENDER.interview = function(){
+  const bankKey = (STATE.targetCareer && INTERVIEW_BANK[STATE.targetCareer.id]) ? STATE.targetCareer.id : 'default';
+  const bank = INTERVIEW_BANK[bankKey];
+  currentQ = bank[Math.floor(Math.random()*bank.length)];
+
+  document.getElementById('main').innerHTML = `
+    <div class="eyebrow">Step 6 · Target: ${STATE.targetCareer ? STATE.targetCareer.name : 'General'}</div>
+    <h2 class="page-title">Mock interview</h2>
+    <p class="page-sub">Scoring here uses a lightweight keyword/structure heuristic so it works
+    fully offline. Swap in a real LLM call (see note below) for genuinely graded feedback.</p>
+
+    <div class="panel">
+      <div class="interview-q">${currentQ.q}</div>
+      <textarea id="answerBox" rows="5" placeholder="Type your answer..."></textarea>
+      <button class="btn" id="submitAnswer" style="margin-top:14px;">Submit answer</button>
+      <div id="feedback"></div>
+    </div>
+    <button class="btn ghost" id="anotherQ">Try another question</button>
+
+    <div class="note-box">
+      To upgrade this into real AI-graded interviews: replace <code>scoreAnswer()</code> in the code
+      with a call to your AI provider, sending the question + answer and asking for technical
+      accuracy, clarity, and completeness scores out of 10, plus one improvement suggestion.
+    </div>
+  `;
+
+  document.getElementById('submitAnswer').addEventListener('click', async ()=>{
+    const answer = document.getElementById('answerBox').value.trim();
+    if(!answer) return;
+    document.getElementById('submitAnswer').disabled = true;
+    document.getElementById('submitAnswer').textContent = 'Scoring...';
+
+    let scores;
+    try{
+      const res = await fetch('/api/score-interview', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ question: currentQ.q, answer })
+      });
+      if(!res.ok) throw new Error('server error');
+      scores = await res.json();
+    }catch(err){
+      scores = scoreAnswer(answer, currentQ.keywords);
+      scores.source = 'local-fallback';
+      scores.feedback = 'Fallback scoring (no AI configured) — based on keyword/length heuristics only.';
+    }
+
+    STATE.interviewScores.push(scores.overall*10);
+    document.getElementById('submitAnswer').disabled = false;
+    document.getElementById('submitAnswer').textContent = 'Submit answer';
+
+    const sourceTag = scores.source === 'ai'
+      ? `<span style="color:var(--green)">● AI-scored</span>`
+      : `<span style="color:var(--text-dim)">● Local fallback</span>`;
+
+    document.getElementById('feedback').innerHTML = `
+      <div class="interview-feedback">
+        <div class="fb-row"><span>Technical accuracy ${sourceTag}</span><span>${scores.technical}/10</span></div>
+        <div class="fb-row"><span>Clarity</span><span>${scores.clarity}/10</span></div>
+        <div class="fb-row"><span>Completeness</span><span>${scores.completeness}/10</span></div>
+        <div class="fb-row"><span><strong>Overall</strong></span><span><strong>${scores.overall}/10</strong></span></div>
+        <div class="fb-note">${scores.feedback || ''}</div>
+        <div class="fb-note">This answer contributes to your Readiness Score's interview component.
+        Go back to Readiness to see it update.</div>
+      </div>
+    `;
+    markDone('interview');
+  });
+
+  document.getElementById('anotherQ').addEventListener('click', ()=>RENDER.interview());
+};
+
+/* init */
+RENDER.profile();
+</script>
+</body>
+</html>
