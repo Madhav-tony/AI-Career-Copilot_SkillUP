@@ -39,13 +39,13 @@ the same.
 npm start
 ```
 
-Then open **http://localhost:3001** in your browser. That's it — the
+Then open **http://localhost:4000** in your browser. That's it — the
 frontend is served by the same Express server, so there's no separate
 frontend process to run.
 
 ## Verify it's working
 
-Visit **http://localhost:3001/api/health** — it tells you whether an API
+Visit **http://localhost:4000/api/health** — it tells you whether an API
 key is configured, and which provider/model it'll use.
 
 When you upload a resume and click "Analyze my profile," look for the small
